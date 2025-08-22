@@ -4,7 +4,9 @@ module.exports = {
   transform: {},
   // Don't transform any files - run tests in CommonJS mode
   transformIgnorePatterns: ['/node_modules/', '/dist/'],
-  testMatch: ['**/tests/**/*.test.js'],
+  testMatch: [
+    '**/tests/**/*.test.js'
+  ],
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '\\._'],
   moduleNameMapper: {
     // Map ES modules to CommonJS wrappers for tests
@@ -15,6 +17,6 @@ module.exports = {
     '^../dist/cache.js$': '<rootDir>/src/cache.cjs',
     '^../dist/tui/index.js$': '<rootDir>/src/tui/index.cjs',
   },
-  // Setup files to run before tests
-  setupFiles: ['<rootDir>/tests/setup.js']
+  // Setup files to run before tests - temporarily disabled
+  // setupFiles: ['<rootDir>/tests/setup.js']
 };
