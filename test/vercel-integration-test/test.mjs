@@ -45,7 +45,7 @@ async function testPlugin() {
   
   try {
     // Import the plugin dynamically
-    const pluginModule = await import(pluginPath);
+    const pluginModule = await import(`file:///${pluginPath.replace(/\\/g, '/')}`);
     const plugin = pluginModule.default;
     
     // Initialize the plugin

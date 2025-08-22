@@ -1,10 +1,10 @@
 // Test script for installing individual packages
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 // Mock the package installation
-jest.mock('../src/package-installer', () => {
+jest.mock('../src/package-installer.js', () => {
   return {
     installPackages: jest.fn().mockImplementation((projectDir, packages, packageManager, options) => {
       console.log(`Mock installing packages: ${packages.join(', ')}`);
@@ -115,7 +115,7 @@ describe('Package Installation Tests', () => {
 
   test('Install single package', async () => {
     // Import the installer directly
-    const { installPackages } = require('../src/package-installer');
+    const { installPackages } = await import('../src/package-installer.js');
 
     // Install the package
     await installPackages(testDir, ['lodash'], 'npm', {});
@@ -126,7 +126,7 @@ describe('Package Installation Tests', () => {
 
   test('Install package with specific version', async () => {
     // Import the installer directly
-    const { installPackages } = require('../src/package-installer');
+    const { installPackages } = await import('../src/package-installer.js');
 
     // Install the package with specific version
     await installPackages(testDir, ['express@4.17.1'], 'npm', {});
@@ -138,7 +138,7 @@ describe('Package Installation Tests', () => {
 
   test('Install package with --save-dev', async () => {
     // Import the installer directly
-    const { installPackages } = require('../src/package-installer');
+    const { installPackages } = await import('../src/package-installer.js');
 
     // Install the package with --save-dev
     await installPackages(testDir, ['chalk'], 'npm', {
@@ -153,7 +153,7 @@ describe('Package Installation Tests', () => {
 
   test('Install package with --save-exact', async () => {
     // Import the installer directly
-    const { installPackages } = require('../src/package-installer');
+    const { installPackages } = await import('../src/package-installer.js');
 
     // Install the package with --save-exact
     await installPackages(testDir, ['moment'], 'npm', {

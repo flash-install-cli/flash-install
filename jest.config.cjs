@@ -4,7 +4,9 @@ module.exports = {
   transform: {},
   // Don't transform any files - run tests in CommonJS mode
   transformIgnorePatterns: ['/node_modules/', '/dist/'],
-  testMatch: ['**/tests/**/*.test.js'],
+  testMatch: [
+    '**/tests/**/*.test.js'
+  ],
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '\\._'],
   moduleNameMapper: {
     // Map ES modules to CommonJS wrappers for tests

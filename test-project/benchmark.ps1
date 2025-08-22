@@ -16,24 +16,24 @@ function Time-Command($label, $command) {
 
 # First run with flash-install
 Clean
-Time-Command "First Run: flash-install" "node ../dist/cli.js install"
+Time-Command "First Run: flash-install" "node ..\dist\cli.js install"
 
 # Clean up
 Clean
 
 # Second run with flash-install
-Time-Command "Second Run: flash-install" "node ../dist/cli.js install"
+Time-Command "Second Run: flash-install" "node ..\dist\cli.js install"
 
 # Clean up
 Clean
 
 # First run with bundled flash-install --fast
-Time-Command "First Run: flash-install.bundle.js --fast" "node ../dist/flash-install.bundle.js --fast"
+Time-Command "First Run: flash-install.bundle.js --fast" "node ..\dist\flash-install.bundle.js --fast"
 
 # Clean up
 Clean
 
 # Second run with bundled flash-install --fast
-Time-Command "Second Run: flash-install.bundle.js --fast" "node ../dist/flash-install.bundle.js --fast"
+Time-Command "Second Run: flash-install.bundle.js --fast" "node ..\dist\flash-install.bundle.js --fast"
 
 Write-Host "\n=== Benchmark Complete ===" 
