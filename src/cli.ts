@@ -21,6 +21,7 @@ import { workspaceManager } from './workspace.js';
 import { Sync } from './sync.js';
 import { telemetry } from './telemetry.js';
 import { startTui } from './tui/index.js';
+import { detectCI, getCIPerformanceMode, isCISuitable, getCIEnvironmentInfo } from './utils/ci-detect.js';
 
 /**
  * Get colored network status
@@ -106,6 +107,26 @@ program
     try {
       // Set global quiet mode
       setQuietMode(options.quiet || false);
+
+      // Detect CI environment and apply performance optimizations
+      const ciDetection = detectCI();
+      if (ciDetection.isCI && ciDetection.recommendCIOptimized) {
+        logger.flash(`⚡ Optimized for CI: ${ciDetection.provider}`);
+        // Apply CI-specific performance settings
+        if (!options.concurrency) {
+          options.concurrency = '12';
+        }
+        if (!options.batchSize) {
+          options.batchSize = '16';
+        }
+        if (!options.cache || options.cache !== false) {
+          options.cache = true; // Ensure caching is enabled
+        }
+        // Disable telemetry in CI by default for privacy
+        if (!options.verbose) {
+          options.quiet = true; // Use quiet mode in CI for cleaner output
+        }
+      }
       
       if (!options.quiet && packages.length > 0) {
         logger.flash('');
@@ -1556,6 +1577,69 @@ program
           logger.info('  flash-install telemetry disable');
         } catch (error) {
           logger.error(format.error(`Failed to get telemetry status: ${error}`));
+          process.exit(1);
+        }
+      })
+  );
+
+// CI command
+program
+  .command('ci')
+  .description('CI environment detection and optimization')
+  .addCommand(
+    new Command('status')
+      .description('Show CI environment detection results')
+      .action(() => {
+        try {
+          const ciDetection = detectCI();
+          const ciPerformance = ciDetection.recommendCIOptimized
+            ? getCIPerformanceMode(ciDetection)
+            : undefined;
+          const ciEnvironment = getCIEnvironmentInfo();
+
+          logger.flash('\n⚡ Flash Install CI Environment Detection\n');
+
+          if (ciDetection.isCI) {
+            logger.flash(`CI Environment: ${chalk.green('Yes')} (${ciDetection.provider})`);
+            logger.flash(`Build ID: ${ciDetection.buildId || 'Not detected'}`);
+
+            if (ciDetection.repo) {
+              logger.flash(`Repository: ${ciDetection.repo}`);
+            }
+
+            if (ciDetection.branch) {
+              logger.flash(`Branch: ${ciDetection.branch}`);
+            }
+
+            if (ciDetection.tag) {
+              logger.flash(`Tagged Release: ${chalk.green('Yes')}`);
+            }
+
+            if (ciDetection.prNumber) {
+              logger.flash(`Pull Request: #${ciDetection.prNumber}`);
+            }
+
+            if (ciPerformance) {
+              logger.info('\nCI-Optimized Settings:');
+              logger.info(`Aggressive Caching: ${ciPerformance.aggressiveCaching ? 'Enabled' : 'Disabled'}`);
+              logger.info(`Max Concurrency: ${ciPerformance.maxConcurrency}`);
+              logger.info(`Minimal Logging: ${ciPerformance.minimalLogging ? 'Enabled' : 'Disabled'}`);
+              logger.info(`Telemetry: ${ciPerformance.disableTelemetry ? 'Disabled' : 'Enabled'}`);
+              logger.info(`Performance Profiling: ${ciPerformance.profilingEnabled ? 'Enabled' : 'Disabled'}`);
+            }
+          } else {
+            logger.flash(`CI Environment: ${chalk.red('No')}`);
+            logger.info('This is not a CI environment.');
+            logger.info('CI optimizations can still be enabled with --ci flag.');
+          }
+
+          logger.info('\nHelpful Options for CI:');
+          logger.info('  flash-install install --concurrency 12 --quiet');
+          logger.info('  flash-install --cloud-cache --cloud-provider s3 --cloud-bucket my-cache');
+          logger.info('  flash-install snapshot && flash-install restore  # For ultra-fast builds');
+
+        } catch (error) {
+          logger.error(format.error(`CI detection error: ${error instanceof Error ? error.message : String(error)}`));
           process.exit(1);
         }
       })

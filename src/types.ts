@@ -123,3 +123,41 @@ export interface TelemetryStats {
   /** Error rate */
   errorRate: number;
 }
+
+/**
+ * CI provider detection results
+ */
+export interface CIDetection {
+  /** Whether running in a CI environment */
+  isCI: boolean;
+  /** CI provider name */
+  provider: string;
+  /** CI build/run ID */
+  buildId?: string;
+  /** Repository information */
+  repo?: string;
+  /** Branch information */
+  branch?: string;
+  /** Tagged release */
+  tag?: boolean;
+  /** Pull request number */
+  prNumber?: number;
+  /** CI-optimized mode recommended */
+  recommendCIOptimized: boolean;
+}
+
+/**
+ * CI performance optimizations
+ */
+export interface CIPerformanceMode {
+  /** Aggressive caching enabled */
+  aggressiveCaching: boolean;
+  /** Maximum concurrency for CI */
+  maxConcurrency: number;
+  /** Streamlined logging */
+  minimalLogging: boolean;
+  /** Disable telemetry in CI */
+  disableTelemetry: boolean;
+  /** Enable performance profiling */
+  profilingEnabled: boolean;
+}

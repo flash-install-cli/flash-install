@@ -25,11 +25,16 @@ jobs:
     - name: Clean npm cache
       run: npm cache clean --force
 
-    - name: Install dependencies
+    - name: Install with npm (flash-install not published yet)
       run: npm ci --no-audit --force
 
     - name: Build
       run: npm run build
+
+    # Note: Flash Install snapshot would be used when published
+    # - name: Create flash-install snapshot
+    #   run: npx flash-install snapshot
+    #   continue-on-error: true
 
     - name: Test
       run: npm test

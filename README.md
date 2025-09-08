@@ -172,14 +172,27 @@ steps:
   - uses: actions/checkout@v3
 
   - name: Install dependencies with Flash Install
-    uses: flash-install-cli/flash-install-action@v1
-    with:
-      # Optional parameters (shown with defaults)
-      command: 'install'           # Command to run (install, restore, snapshot, clean)
-      cache-enabled: 'true'        # Enable GitHub Actions caching
-      package-manager: 'npm'       # Package manager to use (npm, yarn, pnpm, bun)
-      concurrency: '4'             # Number of concurrent downloads
+    run: |
+      npm install -g @flash-install/cli
+      flash-install install --concurrency 8 --quiet
+
+  # Or install and create snapshot for future runs
+  - name: Create flash-install snapshot
+    run: flash-install snapshot
+    continue-on-error: true
+
+  # Future workflows can restore ultra-fast from snapshot
+  - name: Restore ultra-fast from snapshot
+    run: flash-install restore || npm ci
+
+  # Optional GitHub Action (when published):
+  # - uses: flash-install-cli/flash-install-action@v1
+  #   with:
+  #     command: 'install'
+  #     concurrency: '8'
 ```
+
+> Note: The native GitHub Action will be available when `flash-install-cli/flash-install-action` is published.
 
 ## How It Works
 
