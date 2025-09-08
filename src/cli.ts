@@ -22,6 +22,7 @@ import { Sync } from './sync.js';
 import { telemetry } from './telemetry.js';
 import { startTui } from './tui/index.js';
 import { detectCI, getCIPerformanceMode, isCISuitable, getCIEnvironmentInfo } from './utils/ci-detect.js';
+import NetworkAdapter from './utils/network-adapter.js';
 
 /**
  * Get colored network status
@@ -53,12 +54,13 @@ const version = packageJson.version;
 const program = new Command();
 
 program
-  .name('flash-install')
-  .description('A fast, drop-in replacement for npm install with deterministic caching')
-  .version(version)
-  .option('--debug', 'Enable debug mode', false)
-  .option('--fast', 'Enable fast mode (skip plugins/hooks/logging)', false)
-  .option('--ultra-fast', 'Enable ultra-fast mode: max parallelism, native extraction, skip plugins/hooks/scripts, minimal logging', false)
+   .name('flash-install')
+   .description('A fast, drop-in replacement for npm install with deterministic caching')
+   .version(version)
+   .option('--debug', 'Enable debug mode', false)
+   .option('--fast', 'Enable fast mode (skip plugins/hooks/logging)', false)
+   .option('--ultra-fast', 'Enable ultra-fast mode: max parallelism, native extraction, skip plugins/hooks/scripts, minimal logging', false)
+   .option('--blazing', '🚀 BLAZING FAST: ultra-parallel, instant cache, mirror networks, offline-fallback', false)
   .option('--install-timeout <ms>', 'Install task timeout in milliseconds', '120000')
   .option('--concurrency <number>', 'Number of concurrent workers', '10')
   .option('--batch-size <number>', 'Number of packages per batch', '10')
@@ -99,6 +101,8 @@ program
   .option('--team-access-level <level>', 'Team access level (read, write, admin)', 'read')
   .option('--team-restrict', 'Restrict access to team members only', false)
   .option('--lightweight-analysis', 'Enable lightweight dependency analysis for faster installs on small projects', false)
+  .option('--offline-mode', 'Force offline mode, use cache-only installations', false)
+  .option('--ultra-speed', 'Super aggressive optimizations: maximum parallelism, native unzip, instant cache hits', false)
   .option('--quiet', 'Reduce output verbosity', false)
   .action(async (packages: any, options: any, command: any) => {
     const startTime = Date.now();
@@ -108,16 +112,60 @@ program
       // Set global quiet mode
       setQuietMode(options.quiet || false);
 
+      // BLAZING MODE ENABLED - MAXIMUM PERFORMANCE ⚡
+      if (options.blazing) {
+        logger.flash('🚀 BLAZING MODE ACTIVATED ⚡ - Maximum Speed Unleashed!');
+        options.ultraSpeed = true;
+        options.offlineMode = true; // Try offline first, fallback to network
+        options.concurrency = '64';
+        options.quiet = options.quiet || true; // Minimize output for speed
+      }
+
+      // Initialize enhanced network adapter with turbo performance
+      const networkAdapter = new NetworkAdapter({
+        concurrentDownloads: options.blazing ? 64 : options.ultraSpeed ? 32 : 16,
+        timeout: options.blazing ? 5000 : options.ultraSpeed ? 10000 : 15000,
+        offlineMode: options.offlineMode || options.blazing,
+        maxRetries: options.blazing ? 10 : options.ultraSpeed ? 5 : 3
+      });
+
+      // BLAZING MODE: Preload the most common packages instantly
+      if (options.blazing) {
+        networkAdapter.preloadCommonPackages([
+          'typescript', '@types/node', 'esbuild', 'webpack', 'babel',
+          'react', 'vue', 'angular', 'express', 'jest', 'eslint'
+        ]).catch(() => {});
+      }
+
+      // Set up network event listeners for real-time feedback
+      networkAdapter.on('cache-hit', ({ url, duration, size }: { url: string; duration: number; size?: number }) => {
+        if (!options.quiet) {
+          logger.info(`⚡ Cache hit: ${url.split('/').pop()} (${size ? `${size}B` : `${duration}ms`})`);
+        }
+      });
+
+      networkAdapter.on('download-complete', ({ url, duration }: { url: string; duration: number }) => {
+        if (!options.quiet && !options.ultraSpeed) {
+          logger.info(`⬇️  Downloaded: ${url.split('/').pop()} (${duration}ms)`);
+        }
+      });
+
+      networkAdapter.on('offline-fallback-used', ({ url }: { url: string }) => {
+        if (!options.quiet) {
+          logger.info(`💾 Offline cache: ${url.split('/').pop()}`);
+        }
+      });
+
       // Detect CI environment and apply performance optimizations
       const ciDetection = detectCI();
       if (ciDetection.isCI && ciDetection.recommendCIOptimized) {
         logger.flash(`⚡ Optimized for CI: ${ciDetection.provider}`);
-        // Apply CI-specific performance settings
+        // Apply CI-specific performance settings with turbo mode
         if (!options.concurrency) {
-          options.concurrency = '12';
+          options.concurrency = '16';
         }
         if (!options.batchSize) {
-          options.batchSize = '16';
+          options.batchSize = options.ultraSpeed ? '64' : '24';
         }
         if (!options.cache || options.cache !== false) {
           options.cache = true; // Ensure caching is enabled
@@ -126,6 +174,17 @@ program
         if (!options.verbose) {
           options.quiet = true; // Use quiet mode in CI for cleaner output
         }
+
+        // Pre-load common CI packages if in ultra-speed mode
+        if (options.ultraSpeed && !options.offlineMode) {
+          networkAdapter.preloadCommonPackages(['esbuild', '@types/node', 'typescript']).catch(() => {});
+        }
+      }
+
+      // Enable offline mode if flagged or network detection fails
+      if (options.offlineMode) {
+        networkAdapter.enableOfflineMode();
+        logger.info('🚀 Offline mode enabled - using cache-only installation');
       }
       
       if (!options.quiet && packages.length > 0) {

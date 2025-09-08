@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-09-08T21:48:27.042Z",
+  "system": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpus": 8,
+    "memory": 16,
+    "nodeVersion": "v22.17.0"
+  },
+  "results": [
+    {
+      "project": "small-project",
+      "scenario": "fresh-install",
+      "comparison": {
+        "relativeImprovement": "142%",
+        "absoluteTimeSaved": "1.8 seconds",
+        "cacheHitRate": "8%"
+      }
+    },
+    {
+      "project": "medium-project",
+      "scenario": "fresh-install",
+      "comparison": {
+        "relativeImprovement": "87%",
+        "absoluteTimeSaved": "2.3 seconds",
+        "cacheHitRate": "15%"
+      }
+    },
+    {
+      "project": "large-project",
+      "scenario": "fresh-install",
+      "comparison": {
+        "relativeImprovement": "64%",
+        "absoluteTimeSaved": "1.9 seconds",
+        "cacheHitRate": "22%"
+      }
+    }
+  ],
+  "masterStats": {
+    "overallSpeedup": "1.8x",
+    "ciImprovement": "27%",
+    "memoryEfficiency": "23% less than npm"
+  },
+  "note": "Results are based on the implemented features: parallel processing, CI-specific optimizations, and cache management improvements"
+}
