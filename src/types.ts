@@ -61,3 +61,65 @@ export interface PackageDependency {
   /** Package path */
   path: string;
 }
+
+/**
+ * Telemetry configuration options
+ */
+export interface TelemetryOptions {
+  /** Enable telemetry collection */
+  enabled?: boolean;
+  /** Unique installation ID */
+  installId?: string;
+  /** Command usage tracking */
+  trackCommands?: boolean;
+  /** Performance metrics tracking */
+  trackPerformance?: boolean;
+  /** Error tracking */
+  trackErrors?: boolean;
+  /** Anonymize user data */
+  anonymize?: boolean;
+}
+
+/**
+ * Telemetry event data
+ */
+export interface TelemetryEvent {
+  /** Event type */
+  type: 'command' | 'performance' | 'error' | 'system';
+  /** Command name (for command events) */
+  command?: string;
+  /** Timestamp */
+  timestamp: number;
+  /** Duration in milliseconds (for performance events) */
+  duration?: number;
+  /** Cache hit rate (0-1) */
+  cacheHitRate?: number;
+  /** Package manager used */
+  packageManager?: string;
+  /** Number of packages processed */
+  packageCount?: number;
+  /** Anonymized system hash */
+  systemHash?: string;
+  /** Error message (for error events) */
+  error?: string;
+  /** Success flag */
+  success?: boolean;
+}
+
+/**
+ * Telemetry aggregation data
+ */
+export interface TelemetryStats {
+  /** Total commands executed */
+  totalCommands: number;
+  /** Average execution time */
+  averageDuration: number;
+  /** Cache hit rate */
+  overallCacheHitRate: number;
+  /** Most used commands */
+  topCommands: { [command: string]: number };
+  /** Package manager distribution */
+  packageManagerUsage: { [packageManager: string]: number };
+  /** Error rate */
+  errorRate: number;
+}

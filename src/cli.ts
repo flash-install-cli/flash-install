@@ -19,6 +19,7 @@ import { cloudCache, SyncPolicy, CloudCacheConfig } from './cloud/cloud-cache.js
 import { CloudProgress } from './utils/cloud-progress.js';
 import { workspaceManager } from './workspace.js';
 import { Sync } from './sync.js';
+import { telemetry } from './telemetry.js';
 import { startTui } from './tui/index.js';
 
 /**
@@ -99,6 +100,9 @@ program
   .option('--lightweight-analysis', 'Enable lightweight dependency analysis for faster installs on small projects', false)
   .option('--quiet', 'Reduce output verbosity', false)
   .action(async (packages: any, options: any, command: any) => {
+    const startTime = Date.now();
+    let telemetryPackageCount = 0;
+
     try {
       // Set global quiet mode
       setQuietMode(options.quiet || false);
@@ -108,6 +112,9 @@ program
         logger.flash(`⚡ flash-install v${version}`);
         logger.flash(`Installing: ${packages.join(', ')}`);
       }
+
+      // Track telemetry package count
+      telemetryPackageCount = packages.length;
       
       const projectDir = process.cwd();
       // If user typed 'install' as the first argument, treat it as default install
@@ -221,6 +228,11 @@ program
           }
         );
 
+        // Track telemetry for install command
+        const duration = Date.now() - startTime;
+        await telemetry.trackPerformance(0.5, telemetryPackageCount, options.packageManager, success);
+        await telemetry.trackCommand('install', duration, success);
+
         process.exit(success ? 0 : 1);
       } else {
         // Configure workspace options
@@ -309,10 +321,22 @@ program
         await customInstaller.init();
         const success = await customInstaller.install(projectDir);
 
+        // Track telemetry for install command
+        const duration = Date.now() - startTime;
+        await telemetry.trackPerformance(0.5, telemetryPackageCount, options.packageManager, success);
+        await telemetry.trackCommand('install', duration, success);
+
         process.exit(success ? 0 : 1);
       }
     } catch (error) {
-      logger.error(format.error(`Error: ${error instanceof Error ? error.message : String(error)}`) + ' Please check the error message and try again.');
+      // Track telemetry for install command failure
+      const duration = Date.now() - startTime;
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      await telemetry.trackCommand('install', duration, false);
+      await telemetry.trackError(errorMsg, 'install');
+      await telemetry.trackPerformance(0.5, telemetryPackageCount, options.packageManager, false);
+
+      logger.error(format.error(`Error: ${errorMsg}`) + ' Please check the error message and try again.');
       process.exit(1);
     }
   });
@@ -327,6 +351,7 @@ program
   .option('-o, --output <path>', 'Output path for snapshot')
   .option('-t, --cache-timeout <seconds>', 'Timeout for cache operation in seconds', '30')
   .action(async (dir: any, options: any) => {
+    const startTime = Date.now();
     // Resolve project directory
     const projectDir = path.resolve(dir);
 
@@ -386,14 +411,30 @@ program
       // Parse lockfile
       const dependencies = await installer.parseLockfile(projectDir, packageManager);
 
+      // Track telemetry package count and manager
+      const packageCount = Object.keys(dependencies).length;
+
       // Create snapshot
       logger.flash(`Creating snapshot for ${chalk.bold(projectDir)}`);
       const success = await customSnapshot.create(projectDir, dependencies, options.output);
 
       if (!success) {
+        // Track telemetry for snapshot failure
+        const duration = Date.now() - startTime;
+        await telemetry.trackCommand('snapshot', duration, false);
+        await telemetry.trackError('Snapshot creation failed', 'snapshot');
         process.exit(1);
       }
+
+      // Track telemetry for snapshot success
+      const duration = Date.now() - startTime;
+      await telemetry.trackCommand('snapshot', duration, true);
+      await telemetry.trackPerformance(1.0, packageCount, packageManager, true); // Assume perfect cache hit for snapshots
     } catch (error) {
+      // Track telemetry for snapshot error
+      const duration = Date.now() - startTime;
+      await telemetry.trackCommand('snapshot', duration, false);
+      await telemetry.trackError(error instanceof Error ? error.message : String(error), 'snapshot');
       logger.error(format.error(`Failed to create snapshot: ${error}`) + ' Please check the error message and try again.');
       process.exit(1);
     }
@@ -1436,6 +1477,89 @@ program
       process.exit(1);
     }
   });
+
+// Telemetry command
+program
+  .command('telemetry')
+  .description('Manage telemetry collection')
+  .addCommand(
+    new Command('enable')
+      .description('Enable telemetry collection')
+      .action(async () => {
+        try {
+          await telemetry.enable();
+          logger.success('Telemetry collection has been enabled.');
+          logger.info('Flash Install will now collect anonymized usage statistics.');
+        } catch (error) {
+          logger.error(format.error(`Failed to enable telemetry: ${error}`));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('disable')
+      .description('Disable telemetry collection')
+      .action(async () => {
+        try {
+          await telemetry.disable();
+          logger.success('Telemetry collection has been disabled.');
+        } catch (error) {
+          logger.error(format.error(`Failed to disable telemetry: ${error}`));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('status')
+      .description('Show telemetry status and collected statistics')
+      .action(async () => {
+        try {
+          const isEnabled = telemetry.isEnabled();
+          const config = telemetry.getConfig();
+
+          logger.flash('⚡ Flash Install Telemetry Status\n');
+          logger.info(`Telemetry collection: ${isEnabled ? chalk.green('Enabled') : chalk.red('Disabled')}`);
+          logger.info(`Anonymized data: ${config.anonymize !== false ? chalk.green('Yes') : chalk.red('No')}`);
+          logger.info(`Installation ID: ${config.installId ? chalk.cyan(config.installId) : 'Not generated'}`);
+
+          const stats = await telemetry.getStats();
+          if (stats) {
+            logger.info(chalk.bold('\nCollected Statistics:'));
+            logger.info(`Total commands executed: ${stats.totalCommands}`);
+            logger.info(`Average execution time: ${stats.averageDuration.toFixed(2)}ms`);
+            logger.info(`Overall cache hit rate: ${(stats.overallCacheHitRate * 100).toFixed(1)}%`);
+            logger.info(`Error rate: ${(stats.errorRate * 100).toFixed(1)}%`);
+
+            if (Object.keys(stats.topCommands).length > 0) {
+              logger.info(chalk.bold('\nMost used commands:'));
+              Object.entries(stats.topCommands)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 3)
+                .forEach(([cmd, count]) => {
+                  logger.info(`  ${cmd}: ${count} times`);
+                });
+            }
+
+            if (Object.keys(stats.packageManagerUsage).length > 0) {
+              logger.info(chalk.bold('\nPackage manager usage:'));
+              Object.entries(stats.packageManagerUsage)
+                .forEach(([pm, count]) => {
+                  logger.info(`  ${pm}: ${count} times`);
+                });
+            }
+          } else {
+            logger.info('\nNo telemetry data collected yet.');
+          }
+
+          logger.info(chalk.cyan('\nTo change settings:'));
+          logger.info('  flash-install telemetry enable');
+          logger.info('  flash-install telemetry disable');
+        } catch (error) {
+          logger.error(format.error(`Failed to get telemetry status: ${error}`));
+          process.exit(1);
+        }
+      })
+  );
 
 // Register plugin commands
 registerPluginCommands(program);
