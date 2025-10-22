@@ -126,8 +126,8 @@ class BenchmarkRunner {
         dependencies: {}
       };
 
-      // Use limited dependencies to speed up testing
-      const depsToTest = projectConfig.dependencies.slice(0, 3);
+      // Use more dependencies for comprehensive baseline testing
+      const depsToTest = projectConfig.dependencies.slice(0, 10);
 
       depsToTest.forEach(dep => {
         packageJson.dependencies[dep] = '^4.0.0'; // Use realistic versions
@@ -197,8 +197,8 @@ class BenchmarkRunner {
         dependencies: {}
       };
 
-      // Use limited dependencies to speed up testing
-      const depsToTest = projectConfig.dependencies.slice(0, 3);
+      // Use more dependencies for comprehensive baseline testing
+      const depsToTest = projectConfig.dependencies.slice(0, 10);
 
       depsToTest.forEach(dep => {
         packageJson.dependencies[dep] = '^4.0.0';
@@ -214,7 +214,7 @@ class BenchmarkRunner {
 
       try {
         // Run flash-install with our new CI optimizations
-        execSync(`node ${this.flashInstallPath} install --quiet --concurrency 8`, {
+        execSync(`node ${this.flashInstallPath} install --concurrency 8`, {
           cwd: testDir,
           stdio: 'pipe',
           timeout: 120000, // 2 minute timeout
@@ -319,7 +319,7 @@ class BenchmarkRunner {
 }
 
 // Run benchmarks if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (true) {
   const benchmark = new BenchmarkRunner();
   benchmark.run().catch(console.error);
 }

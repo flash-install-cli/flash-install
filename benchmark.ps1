@@ -20,7 +20,7 @@ function Time-Command($label, $command) {
 # --- Cold Runs (First Time Installations) ---
 
 # Define the path to the test project
-$TestProjectPath = ".\test-project-benchmark"
+$TestProjectPath = "..\test-project"
 
 # --- Cold Runs (First Time Installations) ---
 
@@ -31,25 +31,20 @@ Time-Command "Cold Run: npm install (no cache)" "cd $TestProjectPath; npm instal
 
 # Cold run with flash-install
 CleanTestProject $TestProjectPath
-Time-Command "Cold Run: flash-install (no cache)" "cd $TestProjectPath; node ..\dist\cli.js install --lightweight-analysis; cd .."
+Time-Command "Cold Run: flash-install (no cache)" "cd $TestProjectPath; node ../flash-install/dist/cli.js install --lightweight-analysis; cd .."
 
 # Create a snapshot after the cold flash-install run
 Write-Host "Creating flash-install snapshot..."
-Time-Command "Create Snapshot: flash-install" "cd $TestProjectPath; node ..\dist\cli.js snapshot; cd .."
+Time-Command "Create Snapshot: flash-install" "cd $TestProjectPath; node ../flash-install/dist/cli.js snapshot; cd .."
 
 # --- Warm Runs (Subsequent Installations with Cache) ---
 
-# Warm run with npm install (node_modules already exists from previous run)
-Write-Host "Running warm npm install (node_modules should exist)"
-Time-Command "Warm Run: npm install (node_modules exists)" "cd $TestProjectPath; npm install; cd .."
+# Warm run with npm install (reinstall for comparison)
+Write-Host "Running warm npm install (reinstall)"
+Time-Command "Warm Run: npm install (reinstall)" "cd $TestProjectPath; npm install; cd .."
 
 # Warm run with flash-install (using snapshot)
 Write-Host "Running warm flash-install (using snapshot)"
-Time-Command "Warm Run: flash-install (using snapshot)" "cd $TestProjectPath; node ..\dist\cli.js restore --lightweight-analysis; cd .."
-
-# Setup: Ensure flash-install CLI itself is built and its dependencies are installed
-Write-Host "Setting up flash-install CLI..."
-Time-Command "Setup: npm install for flash-install CLI" "npm install"
-Time-Command "Setup: npm run build for flash-install CLI" "npm run build"
+Time-Command "Warm Run: flash-install (using snapshot)" "cd $TestProjectPath; node ../flash-install/dist/cli.js restore --lightweight-analysis; cd .."
 
 Write-Host "\n=== Benchmark Complete ==="

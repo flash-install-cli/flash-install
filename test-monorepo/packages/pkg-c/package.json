@@ -1,8 +1,0 @@
-{
-  "name": "pkg-c",
-  "version": "1.0.0",
-  "dependencies": {
-    "chalk": "^5.2.0",
-    "axios": "^1.3.4"
-  }
-}

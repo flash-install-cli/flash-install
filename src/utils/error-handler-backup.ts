@@ -205,130 +205,40 @@ export class FlashError extends Error {
   }
   
   /**
-   * Log the error with appropriate level and actionable suggestions
+   * Log the error with appropriate level
    */
   log(): void {
     switch (this.recoveryStrategy) {
       case RecoveryStrategy.FAIL:
         logger.error(this.message);
-        this.logSuggestions();
         if (this.originalError) {
           logger.debug(this.getDetailedReport());
         }
         break;
-      
+        
       case RecoveryStrategy.RETRY:
         if (this.retryCount !== undefined && this.maxRetries !== undefined) {
           logger.warn(`${this.message} (Retry ${this.retryCount}/${this.maxRetries})`);
         } else {
           logger.warn(this.message);
         }
-        this.logSuggestions();
         break;
-      
+        
       case RecoveryStrategy.ALTERNATIVE:
         logger.warn(`${this.message} (Using alternative approach)`);
-        this.logSuggestions();
         break;
-      
+        
       case RecoveryStrategy.CONTINUE_DEGRADED:
         logger.warn(`${this.message} (Continuing with degraded functionality)`);
-        this.logSuggestions();
         break;
-      
+        
       case RecoveryStrategy.IGNORE:
         logger.debug(this.message);
         break;
-      
+        
       default:
         logger.error(this.message);
-        this.logSuggestions();
     }
-  }
-  
-  /**
-   * Generate and log actionable suggestions based on the error category
-   */
-  private logSuggestions(): void {
-    const suggestions = this.generateSuggestions();
-    
-    if (suggestions.length > 0) {
-      logger.info('Suggestions to resolve this issue:');
-      suggestions.forEach(suggestion => {
-        logger.info(`  • ${suggestion}`);
-      });
-      
-      // Add a tip about the setup wizard if appropriate
-      if (this.category.includes('CONFIG') || this.category.includes('NETWORK')) {
-        logger.info('  • Run `flash setup` to review and optimize your configuration');
-      }
-    }
-  }
-  
-  /**
-   * Generate actionable suggestions based on the error category
-   */
-  private generateSuggestions(): string[] {
-    const suggestions: string[] = [];
-    
-    switch (this.category) {
-      case ErrorCategory.FILE_NOT_FOUND:
-        suggestions.push('Check that the specified file or directory exists');
-        suggestions.push('Verify the path is correct and properly escaped');
-        suggestions.push('Ensure you have the required permissions to access the file');
-        break;
-      
-      case ErrorCategory.PERMISSION_DENIED:
-        suggestions.push('Run the command with appropriate permissions (e.g. sudo on Unix systems)');
-        suggestions.push('Check file/directory permissions and adjust if necessary');
-        suggestions.push('Verify that your user account has access to the required resources');
-        break;
-      
-      case ErrorCategory.NETWORK_TIMEOUT:
-      case ErrorCategory.NETWORK_CONNECTION:
-      case ErrorCategory.NETWORK_DNS:
-      case ErrorCategory.NETWORK:
-        suggestions.push('Verify your internet connection is working');
-        suggestions.push('Check your proxy or firewall settings');
-        suggestions.push('Try using a different registry URL if applicable');
-        suggestions.push('Consider increasing the timeout value in your configuration');
-        break;
-      
-      case ErrorCategory.DISK_SPACE:
-        suggestions.push('Free up disk space on your system');
-        suggestions.push('Change the cache directory to a location with more space');
-        suggestions.push('Clean the existing cache with `flash clean` command');
-        break;
-      
-      case ErrorCategory.CONFIG_INVALID:
-      case ErrorCategory.CONFIG_MISSING:
-        suggestions.push('Run the setup wizard with `flash setup` to create a valid configuration');
-        suggestions.push('Verify your configuration file has the correct format');
-        suggestions.push('Check that all required configuration values are present');
-        break;
-      
-      case ErrorCategory.CLOUD_AUTHENTICATION:
-      case ErrorCategory.CLOUD_PERMISSION:
-        suggestions.push('Verify your cloud provider credentials are correct');
-        suggestions.push('Check that your account has necessary permissions');
-        suggestions.push('Review your cloud provider access policies');
-        break;
-      
-      case ErrorCategory.PACKAGE_NOT_FOUND:
-        suggestions.push('Verify the package name is spelled correctly');
-        suggestions.push('Check that the package exists in the configured registry');
-        suggestions.push('Try using a different registry if applicable');
-        break;
-      
-      default:
-        suggestions.push('Check the detailed error log for more information');
-        suggestions.push('Verify your configuration settings are correct');
-        suggestions.push('Consult the documentation or seek help from the community');
-        suggestions.push('Try running the command again');
-        break;
-    }
-    
-    return suggestions;
   }
 }
 

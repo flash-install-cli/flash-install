@@ -1,5 +1,41 @@
 # Changelog
 
+## Version 2.0.0 (2025-10-22)
+
+### Added
+- Interactive setup wizard with `flash setup` command for guided configuration
+- Comprehensive user guide system with contextual help (`flash help [topic]`)
+- Enhanced error messages with actionable suggestions based on error categories
+- New documentation files: user documentation, API reference, and tutorials
+- Documentation validation script to ensure comprehensive coverage
+- Performance optimization guides and configuration recommendations
+- Cloud integration examples for AWS S3, GCP, and Azure
+- Parallel download examples and advanced programmatic usage tutorials
+- Error handling examples with recovery strategies
+- Performance tracking API examples and usage guides
+- Core component documentation (NetworkManager, WorkerPool, Timer, etc.)
+- Additional command line options: --workspace and --workspace-filter
+
+### Changed
+- Enhanced FlashError class to provide detailed suggestions for resolution
+- Improved error logging with actionable guidance and setup wizard recommendations
+- Updated README with comprehensive feature overview and architecture details
+- Refined user experience with better guidance and troubleshooting information
+- Enhanced API documentation with complete method references
+- Improved CLI help system with topic-based guidance
+
+### Fixed
+- Fixed TypeScript compilation errors and import issues
+- Corrected worker pool implementation to properly handle concurrent operations
+- Resolved issues with decorator functions and 'this' context in performance tracking
+- Fixed required parameter following optional parameter errors in parallel downloader
+- Corrected path import issues in performance tracker
+- Fixed various compilation and type errors across utility modules
+
+### Security
+- Added integrity verification with SHA256 for cached packages
+- Enhanced error categorization for better security-related error handling
+
 ## Version 1.8.4 (2025-04-30)
 
 ### Bug Fixes
