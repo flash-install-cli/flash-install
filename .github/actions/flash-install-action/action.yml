@@ -96,7 +96,7 @@ runs:
         restore-keys: |
           ${{ runner.os }}-flash-install-
 
-   - name: Run flash-install
+    - name: Run flash-install
      shell: bash
      run: |
        FLASH_ARGS=""
