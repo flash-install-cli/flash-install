@@ -96,69 +96,69 @@ runs:
         restore-keys: |
           ${{ runner.os }}-flash-install-
 
-    - name: Run flash-install
-    shell: bash
-    run: |
-      FLASH_ARGS=""
+   - name: Run flash-install
+     shell: bash
+     run: |
+       FLASH_ARGS=""
 
-      # Enhanced CI(comment decorators detection and optimization
-      if [ "${{ inputs.ci-optimized }}" == "true" ]; then
-        FLASH_ARGS="$FLASH_ARGS --ci-mode"
-        echo "CI optimization enabled - high performance mode"
-      elif [ "${{ inputs.ci-optimized }}" == "auto" ]; then
-        FLASH_ARGS="$FLASH_ARGS --ci-mode"
-        echo "Auto-detecting CI environment for optimization"
-      fi
+       # Enhanced CI(comment decorators detection and optimization
+       if [ "${{ inputs.ci-optimized }}" == "true" ]; then
+         FLASH_ARGS="$FLASH_ARGS --ci-mode"
+         echo "CI optimization enabled - high performance mode"
+       elif [ "${{ inputs.ci-optimized }}" == "auto" ]; then
+         FLASH_ARGS="$FLASH_ARGS --ci-mode"
+         echo "Auto-detecting CI environment for optimization"
+       fi
 
-      # Cloud cache configuration
-      if [ "${{ inputs.cloud-cache }}" == "true" ]; then
-        FLASH_ARGS="$FLASH_ARGS --cloud-cache --cloud-provider ${{ inputs.cloud-provider }}"
+       # Cloud cache configuration
+       if [ "${{ inputs.cloud-cache }}" == "true" ]; then
+         FLASH_ARGS="$FLASH_ARGS --cloud-cache --cloud-provider ${{ inputs.cloud-provider }}"
 
-        if [ -n "${{ inputs.cloud-bucket }}" ]; then
-          FLASH_ARGS="$FLASH_ARGS --cloud-bucket ${{ inputs.cloud-bucket }}"
-        fi
+         if [ -n "${{ inputs.cloud-bucket }}" ]; then
+           FLASH_ARGS="$FLASH_ARGS --cloud-bucket ${{ inputs.cloud-bucket }}"
+         fi
 
-        if [ -n "${{ inputs.cloud-region }}" ]; then
-          FLASH_ARGS="$FLASH_ARGS --cloud-region ${{ inputs.cloud-region }}"
-        fi
+         if [ -n "${{ inputs.cloud-region }}" ]; then
+           FLASH_ARGS="$FLASH_ARGS --cloud-region ${{ inputs.cloud-region }}"
+         fi
 
-        FLASH_ARGS="$FLASH_ARGS --cloud-prefix ${{ inputs.cloud-prefix }}"
-        echo "Cloud cache enabled with ${{ inputs.cloud-provider }} provider"
-      fi
+         FLASH_ARGS="$FLASH_ARGS --cloud-prefix ${{ inputs.cloud-prefix }}"
+         echo "Cloud cache enabled with ${{ inputs.cloud-provider }} provider"
+       fi
 
-      # Performance profiling if enabled
-      if [ "${{ inputs.profile-performance }}" == "true" ]; then
-        FLASH_ARGS="$FLASH_ARGS --profile"
-        echo "Performance profiling enabled"
-      fi
+       # Performance profiling if enabled
+       if [ "${{ inputs.profile-performance }}" == "true" ]; then
+         FLASH_ARGS="$FLASH_ARGS --profile"
+         echo "Performance profiling enabled"
+       fi
 
-      # Workspace support
-      if [ "${{ inputs.workspace-root }}" == "true" ] && [ -f "pnpm-workspace.yaml" ] || [ -f "yarn.lock" ] && grep -q "\"workspaces\":" package.json; then
-        FLASH_ARGS="$FLASH_ARGS --workspace"
-        echo "Workspace support enabled"
-      fi
+       # Workspace support
+       if [ "${{ inputs.workspace-root }}" == "true" ] && [ -f "pnpm-workspace.yaml" ] || [ -f "yarn.lock" ] && grep -q "\"workspaces\":" package.json; then
+         FLASH_ARGS="$FLASH_ARGS --workspace"
+         echo "Workspace support enabled"
+       fi
 
-      # Add package manager and concurrency settings
-      FLASH_ARGS="$FLASH_ARGS --package-manager ${{ inputs.package-manager }} --concurrency ${{ inputs.concurrency }} --no-interactive --quiet"
+       # Add package manager and concurrency settings
+       FLASH_ARGS="$FLASH_ARGS --package-manager ${{ inputs.package-manager }} --concurrency ${{ inputs.concurrency }} --no-interactive --quiet"
 
-      cd ${{ inputs.directory }}
+       cd ${{ inputs.directory }}
 
-      # Show flash-install version and capabilities
-      echo "Flash Install v$(flash-install --version)"
-      flash-install ci status || echo "CI detection not available"
+       # Show flash-install version and capabilities
+       echo "Flash Install v$(flash-install --version)"
+       flash-install ci status || echo "CI detection not available"
 
-      echo "Command: flash-install ${{ inputs.command }}"
-      echo "Arguments: ${FLASH_ARGS}"
+       echo "Command: flash-install ${{ inputs.command }}"
+       echo "Arguments: ${FLASH_ARGS}"
 
-      # Run flash-install directly with fallback to npm if it fails
-      if ! flash-install ${{ inputs.command }} ${FLASH_ARGS}; then
-        echo "::warning::Flash-install failed, falling back to npm..."
-        if [ "${{ inputs.command }}" = "install" ]; then
-          npm install
-        elif [ "${{ inputs.command }}" = "ci" ]; then
-          npm ci
-        else
-          echo "::error::Unsupported command with npm fallback"
-          exit 1
-        fi
-      fi
+       # Run flash-install directly with fallback to npm if it fails
+       if ! flash-install ${{ inputs.command }} ${FLASH_ARGS}; then
+         echo "::warning::Flash-install failed, falling back to npm..."
+         if [ "${{ inputs.command }}" = "install" ]; then
+           npm install
+         elif [ "${{ inputs.command }}" = "ci" ]; then
+           npm ci
+         else
+           echo "::error::Unsupported command with npm fallback"
+           exit 1
+         fi
+       fi
