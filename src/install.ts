@@ -946,25 +946,28 @@ await cache.init();
         }
       }
 
-      // Create snapshot
+      // Create snapshot in background (non-blocking)
       logger.info('Creating .flashpack snapshot...');
 
       // Run pre-snapshot hooks
       await pluginManager.runHook(PluginHook.PRE_SNAPSHOT, pluginContext);
 
       const snapshotTimer = createTimer();
-      const spinner = new Spinner('Creating snapshot');
-      spinner.start();
 
-      const snapshotSuccess = await snapshot.create(projectDir, dependencies);
+      // Fire-and-forget: create snapshot in background, don't wait for it
+      snapshot.create(projectDir, dependencies)
+        .then(async (snapshotSuccess) => {
+          if (snapshotSuccess) {
+            // Run post-snapshot hooks
+            await pluginManager.runHook(PluginHook.POST_SNAPSHOT, pluginContext);
+            logger.debug(`Snapshot created in background: ${snapshotTimer.getElapsedFormatted()}`);
+          }
+        })
+        .catch((error) => {
+          logger.debug(`Background snapshot creation failed (non-blocking): ${error}`);
+        });
 
-      spinner.stop();
-      if (snapshotSuccess) {
-        // Run post-snapshot hooks
-        await pluginManager.runHook(PluginHook.POST_SNAPSHOT, pluginContext);
-
-        logger.success(`Snapshot created in ${snapshotTimer.getElapsedFormatted()}`);
-      }
+      logger.debug('Snapshot creation started in background (install can now complete)');
 
       // Run post-install hooks
       if (!this.options.fastMode) {

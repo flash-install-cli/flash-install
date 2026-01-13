@@ -69,7 +69,7 @@ export interface SnapshotOptions {
  */
 const defaultOptions: SnapshotOptions = {
   format: SnapshotFormat.TAR_GZ,
-  compressionLevel: 6,
+  compressionLevel: 3,
   includeDevDependencies: true
 };
 
@@ -152,10 +152,10 @@ export class Snapshot {
         process.stdout.write('\r' + ' '.repeat(80) + '\r');
         process.stdout.write(`\rCreating tar.gz snapshot... ${' '.repeat(20)}`);
 
-        // Use native tar command (much faster than JS libraries)
+        // Use native tar command with lower compression level (much faster than JS libraries)
         execSync(
-          `tar -czf "${snapshotPath}" -C "${projectDir}" --exclude=".git" --exclude="node_modules/*/node_modules" .flashpack-metadata.json node_modules`,
-          { stdio: 'ignore' }
+          `tar -c -C "${projectDir}" --exclude=".git" --exclude="node_modules/*/node_modules" node_modules | gzip -3 > "${snapshotPath}"`,
+          { stdio: 'ignore', shell: '/bin/bash' }
         );
       }
       else if (isZipFormat(this.options.format)) {
@@ -217,8 +217,7 @@ export class Snapshot {
         await archive.finalize();
       }
 
-      // Remove metadata file
-      await fs.remove(metadataPath);
+      // Keep metadata file separate from archive (faster extraction)
 
       // Add to cache with timeout
       // Update progress message
@@ -696,6 +695,15 @@ export class Snapshot {
    */
   async getMetadata(snapshotPath: string): Promise<any> {
     try {
+      // Check for separate metadata file first (new format)
+      const projectDir = path.dirname(snapshotPath);
+      const metadataPath = path.join(projectDir, '.flashpack-metadata.json');
+      
+      if (await fsUtils.fileExists(metadataPath)) {
+        return await fs.readJSON(metadataPath);
+      }
+
+      // Fall back to extracting from archive (old format)
       // Check file format
       const isTarGz = snapshotPath.endsWith('.tar.gz') || snapshotPath.endsWith('.tgz');
       const isZip = snapshotPath.endsWith('.zip');
