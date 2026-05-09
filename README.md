@@ -1,6 +1,6 @@
 # ⚡ Flash Install - The Fastest Package Installation Tool
 
-[![npm version](https://badge.fury.io/js/@flash-install%2Fcli.svg)](https://badge.fury.io/js/@flash-install%2Fcli)
+[![npm version](https://img.shields.io/npm/v/@flash-install/cli.svg)](https://www.npmjs.com/package/@flash-install/cli)
 [![License](https://img.shields.io/npm/l/@flash-install/cli.svg)](https://github.com/flash-install-cli/flash-install/blob/main/LICENSE)
 [![Downloads](https://img.shields.io/npm/dm/@flash-install/cli.svg)](https://www.npmjs.com/package/@flash-install/cli)
 

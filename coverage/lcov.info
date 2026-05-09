@@ -1,5 +1,5 @@
 TN:
-SF:src\cloud\cloud-cache.cjs
+SF:src/cloud/cloud-cache.cjs
 FN:17,(anonymous_0)
 FN:23,(anonymous_1)
 FN:40,(anonymous_2)
@@ -115,7 +115,7 @@ BRF:44
 BRH:0
 end_of_record
 TN:
-SF:src\cloud\s3-provider.cjs
+SF:src/cloud/s3-provider.cjs
 FN:8,(anonymous_0)
 FN:14,(anonymous_1)
 FN:22,(anonymous_2)
